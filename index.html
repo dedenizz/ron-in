@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Ronin: Kıyamet Sınırı (ULTRA GOD Edition)</title>
+    <!-- FontAwesome İkonları -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>A
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: #010103;
+            overflow: hidden;
+            touch-action: none;
+            font-family: 'Orbitron', sans-serif;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Arka Plan ve Oyun Çizim Alanları */
+        #canvas-holder {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            display: none; 
+        }
+
+        #bgCanvas, #gameCanvas {
+            position: absolute;
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            display: block;
+        }
+
+        #gameCanvas.hide-cursor {
+            cursor: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; 
+            z-index: 10;
+            display: none; 
+            flex-direction: column; 
+            justify-content: space-between;
+            padding: 16px;
+        }
+
+        .top-ui {
+            display: flex; justify-content: space-between; width: 100%;
+        }
+
+        #score-display {
+            font-size: 1.8rem; color: #fff; text-shadow: 0 0 15px #06b6d4;
+        }
+
+        #hud-stats {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+        }
+
+        #wave-display {
+            font-size: 1.3rem; color: #f59e0b; text-shadow: 0 0 12px #f59e0b;
+        }
+
+        .lives-container {
+            display: flex; gap: 5px; font-size: 1rem; color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+        }
+
+        .chip-counter {
+            font-size: 1rem; color: #a7f3d0; text-shadow: 0 0 8px #10b981;
+            font-weight: bold;
+        }
+
+        #ui-overlay-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 9999; 
+            pointer-events: auto;
+        }
+
+        .screen-overlay {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, #0c0516 0%, #020108 100%);
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            padding: 12px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .hidden { display: none !important; }
+
+        .header-group {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .apocalypse-title {
+            font-size: 2.2rem; color: #f43f5e;
+            text-shadow: 0 0 15px #ef4444, 0 0 30px #b91c1c;
+            margin: 0;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .char-select-container {
+            display: flex; gap: 8px; width: 320px; margin-bottom: 12px;
+        }
+
+        .char-card {
+            flex: 1; background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px; padding: 8px 4px;
+            text-align: center; cursor: pointer; transition: all 0.2s ease;
+        }
+
+        .char-card.selected {
+            background: rgba(6, 182, 212, 0.15);
+            border-color: #06b6d4;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+        }
+
+        .char-card i { font-size: 1.3rem; margin-bottom: 4px; display: block; }
+        .char-name { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #fff; }
+        .char-desc { font-size: 0.5rem; color: #9ca3af; margin-top: 2px; font-family: sans-serif; line-height: 1.2; }
+
+        .forge-container {
+            background: rgba(16, 185, 129, 0.03);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px; padding: 10px 14px;
+            width: 320px; margin-bottom: 12px;
+        }
+
+        .forge-title {
+            font-size: 0.75rem; font-weight: bold; color: #10b981;
+            text-align: center; letter-spacing: 2px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .upgrade-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .upgrade-name { font-size: 0.6rem; color: #d1d5db; text-transform: uppercase; }
+        .upgrade-bar-wrapper { display: flex; align-items: center; gap: 6px; }
+        .upgrade-pips { display: flex; gap: 2px; }
+        
+        .pip {
+            width: 8px; height: 8px; background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 2px;
+        }
+        .pip.active {
+            background-color: #10b981; box-shadow: 0 0 6px #10b981; border-color: #34d399;
+        }
+
+        .forge-btn {
+            background-color: rgba(16, 185, 129, 0.1); border: 1px solid #10b981;
+            color: #a7f3d0; padding: 4px 8px; font-size: 0.55rem;
+            font-family: 'Orbitron', sans-serif; border-radius: 4px; cursor: pointer; transition: all 0.1s ease;
+        }
+        .forge-btn:active { transform: scale(0.9); }
+
+        .btn-container { display: flex; flex-direction: column; gap: 6px; width: 320px; margin-bottom: 5px; }
+
+        .difficulty-btn {
+            background-color: rgba(244, 63, 94, 0.1); border: 1.5px solid #ef4444;
+            color: #fca5a5; font-family: 'Orbitron', sans-serif; font-size: 0.68rem;
+            font-weight: bold; padding: 8px 10px; border-radius: 10px; letter-spacing: 1px;
+            cursor: pointer; transition: all 0.15s ease-out; width: 100%; outline: none;
+        }
+
+        .difficulty-btn:hover {
+            background-color: rgba(239, 68, 68, 0.2); box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); transform: translateY(-1px);
+        }
+        .difficulty-btn:active { transform: scale(0.97); }
+        .difficulty-btn[data-diff="easy"] { border-color: #10b981; color: #a7f3d0; background-color: rgba(16, 185, 129, 0.05); }
+        .difficulty-btn[data-diff="medium"] { border-color: #f59e0b; color: #fde68a; background-color: rgba(245, 158, 11, 0.05); }
+        .difficulty-btn[data-diff="god"] {
+            background-color: #ff0055; border-color: #ff0055; color: #ffffff;
+            font-size: 0.72rem; font-weight: 900; text-shadow: 0 0 5px #000;
+            animation: pulseGod 1s infinite alternate; padding: 9px;
+        }
+        .difficulty-btn[data-diff="god"]:hover { background-color: #ff3377; box-shadow: 0 0 20px rgba(255, 0, 85, 0.6); }
+
+        @keyframes pulseGod {
+            0% { box-shadow: 0 0 8px rgba(255, 0, 85, 0.4); transform: scale(1); }
+            100% { box-shadow: 0 0 18px rgba(255, 0, 85, 0.8); transform: scale(1.02); }
+        }
+
+        .action-btn-container { display: flex; flex-direction: column; gap: 8px; width: 240px; }
+        .action-btn {
+            background: linear-gradient(to right, #06b6d4, #4f46e5); border: none; color: white;
+            font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: bold;
+            padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; transition: all 0.2s;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+        }
+        .action-btn:hover { box-shadow: 0 0 20px rgba(6, 182, 212, 0.5); transform: translateY(-1px); }
+        .menu-back-btn { background: #111827; border: 1px solid #374151; color: #9ca3af; font-size: 0.65rem; padding: 8px; }
+        .menu-back-btn:hover { background: #1f2937; color: #f3f4f6; }
+
+        .epilepsy-warning { font-size: 0.5rem; color: #ff0055; text-align: center; margin-top: 5px; font-family: sans-serif; letter-spacing: 0.5px; }
+        .death-text { font-size: 2rem; color: #ef4444; text-shadow: 0 0 15px #ef4444; margin: 0 0 15px 0; text-align: center; font-weight: 900; }
+    </style>
+</head>
+<body>
+
+    <!-- Tuval Yuvası -->
+    <div id="canvas-holder">
+        <canvas id="bgCanvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- HUD Katmanı -->
+    <div id="ui-layer">
+        <div class="top-ui">
+            <div id="score-display">0</div>
+            <div id="hud-stats">
+                <div id="wave-display">SİNYAL AKTİF</div>
+                <div class="lives-container" id="lives-display"></div>
+                <div class="chip-counter"><i class="fa-solid fa-microchip"></i> <span id="hud-chips">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arayüz Konteyneri -->
+    <div id="ui-overlay-container">
+        <!-- Başlangıç Ekranı -->
+        <div id="startScreen" class="screen-overlay">
+            <div class="header-group">
+                <h1 class="apocalypse-title">NEON RONİN</h1>
+                <p style="color: rgba(6, 182, 212, 0.8); font-size: 9px; margin: 2px 0 6px 0; letter-spacing: 3px; text-align: center; text-transform: uppercase;">Ultra God Sürümü</p>
+            </div>
+
+            <div class="forge-container">
+                <div class="forge-title">
+                    <span><i class="fa-solid fa-gears"></i> NANO-DEMİRCİ</span>
+                    <span style="color: #34d399;"><i class="fa-solid fa-microchip"></i> <span id="forge-chip-count">0</span></span>
+                </div>
+                <div class="upgrade-row">
+                    <span class="upgrade-name">Kılıç Menzili</span>
+                    <div class="upgrade-bar-wrapper">
+                        <div class="upgrade-pips" id="pips-range">
+                            <div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div>
+                        </div>
+                        <button class="forge-btn" data-upgrade="range">YÜKSELT (15)</button>
+                    </div>
+                </div>
+                <div class="upgrade-row">
+                    <span class="upgrade-name">Kalkan Şarjı</span>
+                    <div class="upgrade-bar-wrapper">
+                        <div class="upgrade-pips" id="pips-shield">
+                            <div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div>
+                        </div>
+                        <button class="forge-btn" data-upgrade="shield">YÜKSELT (20)</button>
+                    </div>
+                </div>
+                <div class="upgrade-row">
+                    <span class="upgrade-name">Getsuga Gücü</span>
+                    <div class="upgrade-bar-wrapper">
+                        <div class="upgrade-pips" id="pips-getsuga">
+                            <div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div>
+                        </div>
+                        <button class="forge-btn" data-upgrade="getsuga">YÜKSELT (25)</button>
+                    </div>
+                </div>
+            </div>
+
+            <span style="color: #9ca3af; font-size: 8px; text-align: center; display: block; margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase;">KAHRAMANINI SEÇ</span>
+            <div class="char-select-container">
+                <div id="char-ronin" class="char-card selected" data-char="ronin">
+                    <i class="fa-solid fa-shuttle-space text-cyan-400"></i>
+                    <div class="char-name">Ronin</div>
+                    <div class="char-desc">Dengeli<br>Pasif: Kritik Atış</div>
+                </div>
+                <div id="char-kitsune" class="char-card" data-char="kitsune">
+                    <i class="fa-solid fa-bolt text-pink-400"></i>
+                    <div class="char-name">Kitsune</div>
+                    <div class="char-desc">Çevik<br>Pasif: Çift Dalga</div>
+                </div>
+                <div id="char-oni" class="char-card" data-char="oni">
+                    <i class="fa-solid fa-fire text-amber-500"></i>
+                    <div class="char-name">Oni</div>
+                    <div class="char-desc">Yıkıcı<br>Pasif: Şok Dalgası</div>
+                </div>
+            </div>
+
+            <div class="btn-container">
+                <button class="difficulty-btn" data-diff="easy">KOLAY MOD (3 CAN)</button>
+                <button class="difficulty-btn" data-diff="medium">ORTA MOD (1 CAN + RE-ŞARJ)</button>
+                <button class="difficulty-btn" data-diff="hard">ZOR MOD (TEK CAN - SAF REFLEKS)</button>
+                <button class="difficulty-btn" data-diff="hell" style="border-color: #ef4444; color: #fca5a5;"><i class="fa-solid fa-fire mr-1"></i> CEHENNEM (11 DÜŞMAN KAOS)</button>
+                <button class="difficulty-btn" data-diff="heaven" style="border-color: #a855f7; color: #e9d5ff;"><i class="fa-solid fa-cross mr-1"></i> CENNET (30 DÜŞMAN BULLET HELL)</button>
+                <button id="btn-god" class="difficulty-btn" data-diff="god"><i class="fa-solid fa-skull mr-1"></i> GOD MODU (SINIRSIZ KAOS & EFEKT)</button>
+            </div>
+            <div class="epilepsy-warning"><i class="fa-solid fa-circle-exclamation"></i> UYARI: GOD MODU AŞIRI YÜKSEK GÖRSEL EFEKTLER İÇERİR!</div>
+        </div>
+
+        <!-- Ölüm Ekranı -->
+        <div id="gameOverScreen" class="screen-overlay hidden">
+            <h1 class="death-text">SİNYAL BOZULDU</h1>
+            <div style="font-size: 1.3rem; color: #fff; margin-bottom: 4px; font-family: monospace; text-align: center;">SKOR: <span id="finalScore" style="color: #06b6d4; font-weight: bold;">0</span></div>
+            <div style="font-size: 1rem; color: #a7f3d0; margin-bottom: 4px; font-family: monospace; text-align: center;">TOPLANAN NANO-ÇİP: <span id="finalChips" style="color: #10b981; font-weight: bold;">0</span></div>
+            <div style="font-size: 0.9rem; color: #9ca3af; margin-bottom: 15px; font-family: monospace; text-align: center;">ULAŞILAN DALGA: <span id="finalWave" style="color: #f59e0b; font-weight: bold;">1</span></div>
+            
+            <div class="action-btn-container">
+                <button id="btn-retry" class="action-btn">SİNYALİ RE-BOOT ET</button>
+                <button id="btn-menu" class="action-btn menu-back-btn">MENÜYE DÖN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const uiContainer = document.getElementById('ui-overlay-container');
+            function routeUIEvent(target) {
+                if (!target) return;
+                if (target.classList.contains('difficulty-btn') || target.closest('.difficulty-btn')) {
+                    const btn = target.closest('.difficulty-btn');
+                    const diff = btn.getAttribute('data-diff');
+                    if (diff) window.handleStart(diff);
+                }
+                if (target.classList.contains('char-card') || target.closest('.char-card')) {
+                    const card = target.closest('.char-card');
+                    const charName = card.getAttribute('data-char');
+                    if (charName) window.selectCharacter(charName);
+                }
+                if (target.classList.contains('forge-btn') || target.closest('.forge-btn')) {
+                    const btn = target.closest('.forge-btn');
+                    const upgType = btn.getAttribute('data-upgrade');
+                    if (upgType) window.buyUpgrade(upgType);
+                }
+                if (target.id === 'btn-retry') {
+                    document.getElementById('gameOverScreen').classList.add('hidden');
+                    window.startGame();
+                }
+                if (target.id === 'btn-menu') {
+                    document.getElementById('gameOverScreen').classList.add('hidden');
+                    document.getElementById('startScreen').classList.remove('hidden');
+                }
+            }
+            uiContainer.addEventListener('click', function(e) { routeUIEvent(e.target); });
+            uiContainer.addEventListener('pointerdown', function(e) { routeUIEvent(e.target); });
+        })();
+    </script>
+
+    <script>
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d', { alpha: false });
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+
+        function resize() {
+            width = window.innerWidth; height = window.innerHeight;
+            bgCanvas.width = width; bgCanvas.height = height;
+            canvas.width = width; canvas.height = height;
+            bgCtx.fillStyle = '#010103'; bgCtx.fillRect(0, 0, width, height);
+        }
+        window.addEventListener('resize', resize);
+
+        let nanoChips = 0; 
+        const upgrades = { range: 0, shield: 0, getsuga: 0 };
+        const upgradeCosts = { range: [15, 30, 45, 60, 100], shield: [20, 40, 60, 80, 120], getsuga: [25, 50, 75, 100, 150] };
+
+        const DIFFICULTY_SETTINGS = {
+            easy: { lives: 3, enemySpeedScale: 0.65, laserChargeTime: 180, hasShield: false, baseEnemies: 4 },
+            medium: { lives: 1, enemySpeedScale: 0.95, laserChargeTime: 130, hasShield: true, baseEnemies: 5 },
+            hard: { lives: 1, enemySpeedScale: 1.25, laserChargeTime: 85, hasShield: false, baseEnemies: 7 },
+            hell: { lives: 1, enemySpeedScale: 1.35, laserChargeTime: 70, hasShield: false, baseEnemies: 11 },
+            heaven: { lives: 1, enemySpeedScale: 1.5, laserChargeTime: 60, hasShield: false, baseEnemies: 30 },
+            god: { lives: 1, enemySpeedScale: 1.9, laserChargeTime: 30, hasShield: false, baseEnemies: 80 } 
+        };
+
+        const CLASSES = {
+            ronin: { color: '#06b6d4', waveType: 'getsuga' },
+            kitsune: { color: '#ec4899', waveType: 'kitsune_double' },
+            oni: { color: '#f59e0b', waveType: 'oni_vortex' }
+        };
+
+        let player = { x: width / 2, y: height / 2, r: 12, color: '#06b6d4', lives: 1, shield: false, doublePoints: 0, invincible: 0, afterImages: [] };
+
+        let enemies = [], bullets = [], particles = [], floatingTexts = [];
+        let powerups = [], swordWaves = [], rain = [], embers = [], siberChips = [];
+        let visualSlashes = []; // Kılıç izleri efekt dizisi
+
+        let pointer = { isDown: false, startX: 0, startY: 0, x: 0, y: 0, type: 'mouse' };
+        let isLoopRunning = false, state = 'MENU', score = 0, wave = 1;
+        let currentDifficulty = 'medium', selectedClass = 'ronin';
+        let enemiesToSpawn = 0, waveTimer = 0, survivalTimeTracker = 0;
+        let dynamicSpeedMultiplier = 1.0, dynamicChargeMultiplier = 1.0;
+        let bgHueOffset = 0, screenShake = 0, hitFlash = 0, timeScale = 1.0;
+        let hitStopTimer = 0; // Vuruş hissi (mikro duraklama)
+        let comboCounter = 0, comboTimer = 0; // Combo sistemi
+
+        let rawMouseX = width / 2, rawMouseY = height / 2, isMouseActive = false;
+
+        function loadFromLocalStorage() {
+            try {
+                let savedChips = localStorage.getItem('ronin_nano_chips');
+                let savedUpgrades = localStorage.getItem('ronin_upgrades');
+                if (savedChips !== null) nanoChips = parseInt(savedChips);
+                if (savedUpgrades !== null) Object.assign(upgrades, JSON.parse(savedUpgrades));
+            } catch (e) {}
+            updateForgeUI();
+        }
+
+        function saveToLocalStorage() {
+            try { localStorage.setItem('ronin_nano_chips', nanoChips); localStorage.setItem('ronin_upgrades', JSON.stringify(upgrades)); } catch (e) {}
+        }
+
+        function updateForgeUI() {
+            const forgeCount = document.getElementById('forge-chip-count');
+            const hudChips = document.getElementById('hud-chips');
+            if (forgeCount) forgeCount.innerText = nanoChips;
+            if (hudChips) hudChips.innerText = nanoChips;
+
+            for (let type in upgrades) {
+                let pipsContainer = document.getElementById(`pips-${type}`);
+                if (pipsContainer) {
+                    let pips = pipsContainer.getElementsByClassName('pip');
+                    for (let i = 0; i < pips.length; i++) {
+                        if (i < upgrades[type]) pips[i].classList.add('active');
+                        else pips[i].classList.remove('active');
+                    }
+                    let btn = pipsContainer.nextElementSibling;
+                    if (btn) {
+                        let currentLevel = upgrades[type];
+                        if (currentLevel >= 5) btn.innerText = "MAX";
+                        else btn.innerText = `YÜKSELT (${upgradeCosts[type][currentLevel]})`;
+                    }
+                }
+            }
+        }
+
+        function initEnvironmentalEffects() {
+            rain = []; for (let i = 0; i < 45; i++) rain.push({ x: Math.random() * width, y: Math.random() * height, speed: Math.random() * 12 + 10, len: Math.random() * 15 + 10 });
+            embers = []; for (let i = 0; i < 20; i++) embers.push({ x: Math.random() * width, y: Math.random() * height, speedX: (Math.random() - 0.7) * 2, speedY: Math.random() * 1.5 + 1, r: Math.random() * 3 + 1, glow: Math.random() * 0.5 + 0.3 });
+        }
+
+        function updateLivesUI() {
+            const container = document.getElementById('lives-display');
+            if (!container) return;
+            container.innerHTML = '';
+            for (let i = 0; i < player.lives; i++) container.innerHTML += '<i class="fa-solid fa-heart"></i> ';
+            if (player.shield) container.innerHTML += '<i class="fa-solid fa-shield-halved text-sky-400"></i>';
+        }
+
+        function spawnFloatingText(x, y, text, color, scale = 1.0) {
+            floatingTexts.push({ x: x, y: y, text: text, color: color || '#fff', life: 1.0, scale: scale });
+        }
+
+        function createExplosion(x, y, color, count) {
+            const pCount = currentDifficulty === 'god' ? count * 2 : count; // God modunda 2 katı şarapnel
+            for (let i = 0; i < pCount; i++) {
+                let isSpark = Math.random() > 0.6; // Kıvılcım olma ihtimali
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * (isSpark ? 35 : 12), // Kıvılcımlar inanılmaz hızlı fırlar
+                    vy: (Math.random() - 0.5) * (isSpark ? 35 : 12),
+                    life: 1.0, decay: Math.random() * 0.04 + 0.02,
+                    color: currentDifficulty === 'god' && !isSpark ? `hsl(${Math.random()*360}, 100%, 60%)` : (color || '#ff0055'),
+                    r: Math.random() * (isSpark ? 2 : 4) + 1.5,
+                    bounce: !isSpark && Math.random() > 0.7,
+                    isSpark: isSpark
+                });
+            }
+        }
+
+        function spawnEnemy() {
+            if (enemiesToSpawn <= 0 && !['hell', 'heaven', 'god'].includes(currentDifficulty)) return;
+            const types = ['chaser', 'shooter', 'laser', 'leviathan'];
+            let chosenType = 'chaser';
+            const rand = Math.random();
+            if (currentDifficulty === 'easy') chosenType = rand > 0.8 ? 'shooter' : 'chaser';
+            else if (currentDifficulty === 'medium') { if (rand > 0.88) chosenType = 'laser'; else if (rand > 0.65) chosenType = 'shooter'; }
+            else { if (rand > 0.92) chosenType = 'leviathan'; else if (rand > 0.78) chosenType = 'laser'; else if (rand > 0.55) chosenType = 'shooter'; }
+
+            let eX, eY;
+            if (Math.random() > 0.5) { eX = Math.random() > 0.5 ? -40 : width + 40; eY = Math.random() * height; } 
+            else { eX = Math.random() * width; eY = Math.random() > 0.5 ? -40 : height + 40; }
+
+            let size = 15, hp = 1, color = '#ef4444';
+            if (chosenType === 'shooter') { size = 14; color = '#a855f7'; } 
+            else if (chosenType === 'laser') { size = 16; color = '#f59e0b'; } 
+            else if (chosenType === 'leviathan') { size = 26; hp = 3; color = '#10b981'; }
+
+            let maxT = DIFFICULTY_SETTINGS[currentDifficulty].laserChargeTime / dynamicChargeMultiplier;
+            enemies.push({
+                x: eX, y: eY, r: size, type: chosenType, color: color, hp: hp, maxHp: hp,
+                timer: chosenType === 'laser' ? maxT : Math.random() * 80 + 40,
+                maxTimer: maxT, laserAngle: 0, isLocked: false, state: 'aiming', dead: false
+            });
+
+            if (!['hell', 'heaven', 'god'].includes(currentDifficulty)) enemiesToSpawn--;
+        }
+
+        function distToSegment(p, v, w) {
+            let l2 = (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
+            if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+            let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+            t = Math.max(0, Math.min(1, t));
+            return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+        }
+
+        function checkWave() {
+            if (enemies.length === 0 && enemiesToSpawn <= 0) {
+                wave++;
+                spawnFloatingText(width / 2, height / 2 - 50, `DALGA ${wave}`, '#f59e0b', 1.5);
+                const cfg = DIFFICULTY_SETTINGS[currentDifficulty];
+                enemiesToSpawn = cfg.baseEnemies + wave * 2;
+                waveTimer = 30;
+                
+                if (cfg.hasShield && !player.shield) player.shield = true;
+                else if (player.lives < cfg.lives) player.lives++;
+                updateLivesUI();
+
+                const waveDisplay = document.getElementById('wave-display');
+                if (waveDisplay) waveDisplay.innerText = `DALGA ${wave}`;
+
+                if (Math.random() > 0.4) {
+                    powerups.push({ x: Math.random() * (width - 120) + 60, y: Math.random() * (height - 120) + 60, r: 10, type: Math.random() > 0.5 ? 'shield' : 'double', pulse: 0 });
+                }
+            }
+        }
+
+        function playerTakeDamage() {
+            if (player.invincible > 0) return;
+            if (player.shield) {
+                player.shield = false; player.invincible = 45; hitFlash = 0.5; screenShake = 20;
+                spawnFloatingText(player.x, player.y - 35, "KALKAN ENGELEDİ!", '#38bdf8', 1.2);
+                createExplosion(player.x, player.y, '#38bdf8', 35);
+                updateLivesUI();
+                return;
+            }
+            player.lives--; player.invincible = 75; hitFlash = 0.9; screenShake = 35; comboCounter = 0;
+            spawnFloatingText(player.x, player.y - 35, "HASAR!", '#ef4444', 1.5);
+            createExplosion(player.x, player.y, '#ef4444', 50);
+            updateLivesUI();
+            if (player.lives <= 0) gameOver();
+        }
+
+        window.handleStart = function(diff) { currentDifficulty = diff; window.startGame(); };
+        window.selectCharacter = function(className) {
+            selectedClass = className; player.color = CLASSES[className].color;
+            document.querySelectorAll('.char-card').forEach(card => card.classList.remove('selected'));
+            const selectedCard = document.getElementById(`char-${className}`);
+            if (selectedCard) selectedCard.classList.add('selected');
+        };
+
+        window.buyUpgrade = function(type) {
+            let currentLevel = upgrades[type];
+            if (currentLevel >= 5) { spawnFloatingText(width/2, height/2, "MAKSİMUM SEVİYE!", '#f59e0b'); return; }
+            let cost = upgradeCosts[type][currentLevel];
+            if (nanoChips >= cost) {
+                nanoChips -= cost; upgrades[type]++; saveToLocalStorage(); updateForgeUI();
+                spawnFloatingText(width/2, height/2, "NANO SISTEM GÜNCELLENDİ!", '#10b981');
+            } else spawnFloatingText(width/2, height/2, "YETERSİZ SİBER ÇİP!", '#ef4444');
+        };
+
+        window.startGame = function() {
+            state = 'PLAYING'; score = 0; wave = 1; survivalTimeTracker = 0;
+            dynamicSpeedMultiplier = 1.0; dynamicChargeMultiplier = 1.0; bgHueOffset = 0; hitStopTimer = 0; comboCounter = 0;
+            resize();
+
+            const cfg = DIFFICULTY_SETTINGS[currentDifficulty];
+            player.x = width / 2; player.y = height / 2; player.lives = cfg.lives;
+            player.shield = cfg.hasShield; player.doublePoints = 0; player.invincible = 0; player.color = CLASSES[selectedClass].color;
+
+            rawMouseX = width / 2; rawMouseY = height / 2; isMouseActive = false; pointer.isDown = false;
+            enemies = []; bullets = []; particles = []; visualSlashes = []; floatingTexts = []; powerups = []; swordWaves = []; siberChips = [];
+
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('ui-overlay-container').style.display = 'none'; 
+            document.getElementById('ui-layer').style.display = 'flex';
+            document.getElementById('canvas-holder').style.display = 'block';
+            canvas.classList.add('hide-cursor');
+
+            initEnvironmentalEffects(); updateLivesUI(); document.getElementById('score-display').innerText = score;
+            enemiesToSpawn = cfg.baseEnemies; waveTimer = 30;
+
+            if (['hell', 'heaven', 'god'].includes(currentDifficulty)) {
+                document.getElementById('wave-display').innerText = currentDifficulty.toUpperCase();
+                for (let i = 0; i < cfg.baseEnemies; i++) spawnEnemy();
+            } else document.getElementById('wave-display').innerText = `DALGA ${wave}`;
+
+            if (!isLoopRunning) { isLoopRunning = true; requestAnimationFrame(loop); }
+        };
+
+        window.addEventListener('pointerdown', (e) => {
+            if (state !== 'PLAYING') return;
+            pointer.isDown = true; pointer.startX = e.clientX; pointer.startY = e.clientY;
+            pointer.x = e.clientX; pointer.y = e.clientY; pointer.type = e.pointerType;
+            timeScale = 0.08; 
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (state !== 'PLAYING') return;
+            if (e.pointerType === 'mouse') { rawMouseX = e.clientX; rawMouseY = e.clientY; isMouseActive = true; }
+            if (pointer.isDown) { pointer.x = e.clientX; pointer.y = e.clientY; }
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            if (state !== 'PLAYING') return;
+            if (pointer.isDown) { pointer.isDown = false; timeScale = 1.0; executeDash(); }
+        });
+
+        function performDash(startX, startY, endX, endY) {
+            endX = Math.max(player.r, Math.min(width - player.r, endX));
+            endY = Math.max(player.r, Math.min(height - player.r, endY));
+
+            player.x = endX; player.y = endY;
+            createExplosion(startX, startY, player.color, 12);
+
+            let killCountThisDash = 0;
+
+            enemies.forEach(e => {
+                if (e.dead) return;
+                const d = distToSegment(e, {x: startX, y: startY}, {x: endX, y: endY});
+                if (d < e.r + 25) { 
+                    e.hp--;
+                    createExplosion(e.x, e.y, e.color, 20);
+                    
+                    if (e.hp <= 0) {
+                        e.dead = true;
+                        killCountThisDash++;
+                        comboCounter++;
+                        comboTimer = 120; // Comboyu koruma süresi
+                        
+                        score += (player.doublePoints > 0 ? 30 : 15) * Math.min(5, comboCounter);
+                        document.getElementById('score-display').innerText = score;
+                        
+                        if (Math.random() < 0.6) {
+                            siberChips.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8, r: 5, pulse: Math.random() * 10, dead: false });
+                        }
+                    }
+                }
+            });
+
+            // GÖRSEL ŞÖLEN (JUICE) HESAPLAMALARI
+            if (killCountThisDash > 0) {
+                hitStopTimer = Math.min(12, killCountThisDash * 3); // Vuruş Donması (Ağır Çekim)
+                screenShake = 15 + (killCountThisDash * 6);
+                hitFlash = 0.4;
+                
+                const texts = ["HARİKA!", "SİBER-KASAP!", "PARAMPARÇA!", "KUSURSUZ!", "KATLİAM!"];
+                let txt = texts[Math.min(killCountThisDash - 1, texts.length - 1)];
+                if (currentDifficulty === 'god' || killCountThisDash >= 5) txt = "GODLIKE!!!";
+                spawnFloatingText(endX, endY - 40, `${killCountThisDash}X ${txt}`, '#f43f5e', 1.2 + (killCountThisDash*0.1));
+            } else {
+                screenShake = 6;
+            }
+
+            // Devasa Kılıç İzi Efekti Ekle
+            visualSlashes.push({
+                x1: startX, y1: startY, x2: endX, y2: endY,
+                life: 1.0, 
+                color: currentDifficulty === 'god' ? `hsl(${Math.random()*360}, 100%, 60%)` : player.color,
+                width: 6 + (killCountThisDash * 3)
+            });
+
+            const angle = Math.atan2(endY - startY, endX - startX);
+            const sizeBase = 25 + (upgrades.getsuga * 6);
+
+            if (CLASSES[selectedClass].waveType === 'getsuga') {
+                swordWaves.push({ x: startX, y: startY, vx: Math.cos(angle) * 11, vy: Math.sin(angle) * 11, r: sizeBase, angle: angle, color: '#06b6d4', life: 1.0, type: 'normal', dead: false });
+            } else if (CLASSES[selectedClass].waveType === 'kitsune_double') {
+                swordWaves.push({ x: startX, y: startY, vx: Math.cos(angle - 0.25) * 9.5, vy: Math.sin(angle - 0.25) * 9.5, r: sizeBase * 0.85, angle: angle - 0.25, color: '#ec4899', life: 1.0, type: 'normal', dead: false });
+                swordWaves.push({ x: startX, y: startY, vx: Math.cos(angle + 0.25) * 9.5, vy: Math.sin(angle + 0.25) * 9.5, r: sizeBase * 0.85, angle: angle + 0.25, color: '#ec4899', life: 1.0, type: 'normal', dead: false });
+            } else if (CLASSES[selectedClass].waveType === 'oni_vortex') {
+                swordWaves.push({ x: startX, y: startY, vx: 0, vy: 0, r: 10, angle: 0, maxR: sizeBase * 2.5, color: '#f59e0b', life: 1.0, type: 'oni', dead: false });
+            }
+        }
+
+        function getDashTarget() {
+            let dx, dy;
+            if (pointer.type === 'mouse') { dx = pointer.x - player.x; dy = pointer.y - player.y; } 
+            else { dx = (pointer.x - pointer.startX) * 3.5; dy = (pointer.y - pointer.startY) * 3.5; }
+
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 5) return null;
+
+            const maxRange = 500 * (1 + (upgrades.range * 0.15));
+            let dashRange = Math.min(maxRange, dist);
+            let angle = Math.atan2(dy, dx);
+            
+            let endX = Math.max(player.r, Math.min(width - player.r, player.x + Math.cos(angle) * dashRange));
+            let endY = Math.max(player.r, Math.min(height - player.r, player.y + Math.sin(angle) * dashRange));
+            return { x: endX, y: endY, angle: angle };
+        }
+
+        function executeDash() {
+            let target = getDashTarget();
+            if (target) performDash(player.x, player.y, target.x, target.y);
+        }
+
+        function gameOver() {
+            state = 'GAMEOVER'; saveToLocalStorage();
+            document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('canvas-holder').style.display = 'none';
+            canvas.classList.remove('hide-cursor');
+            document.getElementById('ui-overlay-container').style.display = 'block'; 
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('finalChips').innerText = nanoChips;
+            document.getElementById('finalWave').innerText = wave;
+        }
+
+        function loop(timestamp) {
+            requestAnimationFrame(loop);
+            if (state !== 'PLAYING') return;
+
+            // Hit Stop Fiziği (Vuruş hissi için zamanı çok kısa süreliğine dondurur)
+            let dtScale = timeScale;
+            if (hitStopTimer > 0) {
+                dtScale = 0.05; // Aşırı ağır çekim
+                hitStopTimer--;
+            }
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.save();
+            
+            if (screenShake > 0) {
+                ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+                screenShake *= 0.88; if (screenShake < 0.5) screenShake = 0;
+            }
+
+            bgHueOffset += 0.003;
+            let gradient = ctx.createRadialGradient(width / 2, height / 2, 10, width / 2, height / 2, width);
+            
+            if (currentDifficulty === 'easy') { let h1 = (Math.floor(bgHueOffset * 100) + 140) % 360; gradient.addColorStop(0, `hsla(${h1}, 80%, 15%, 0.1)`); gradient.addColorStop(0.5, `hsla(${h1 + 40}, 70%, 10%, 0.05)`); gradient.addColorStop(1, 'rgba(1, 1, 3, 0)'); } 
+            else if (currentDifficulty === 'medium') { let h1 = (Math.floor(bgHueOffset * 80) + 40) % 360; gradient.addColorStop(0, `hsla(${h1}, 80%, 15%, 0.12)`); gradient.addColorStop(0.5, `hsla(${h1 + 20}, 70%, 10%, 0.06)`); gradient.addColorStop(1, 'rgba(1, 1, 3, 0)'); } 
+            else if (currentDifficulty === 'hard') { let h1 = (Math.floor(bgHueOffset * 60) + 340) % 360; gradient.addColorStop(0, `hsla(${h1}, 85%, 15%, 0.14)`); gradient.addColorStop(0.5, `hsla(${h1 + 30}, 75%, 10%, 0.07)`); gradient.addColorStop(1, 'rgba(1, 1, 3, 0)'); } 
+            else if (currentDifficulty === 'hell') { let h1 = (Math.floor(bgHueOffset * 120) + 260) % 360; gradient.addColorStop(0, `hsla(${h1}, 90%, 15%, 0.15)`); gradient.addColorStop(0.5, `hsla(${h1 + 40}, 80%, 10%, 0.08)`); gradient.addColorStop(1, 'rgba(1, 1, 3, 0)'); } 
+            else if (currentDifficulty === 'heaven') { let h1 = (Math.floor(bgHueOffset * 90) + 180) % 360; gradient.addColorStop(0, `hsla(${h1}, 95%, 15%, 0.16)`); gradient.addColorStop(0.5, `hsla(${h1 + 20}, 85%, 10%, 0.08)`); gradient.addColorStop(1, 'rgba(1, 1, 3, 0)'); } 
+            else if (currentDifficulty === 'god') { let hue1 = Math.floor(bgHueOffset * 500) % 360; let hue2 = (hue1 + 180) % 360; gradient.addColorStop(0, `hsla(${hue1}, 100%, 25%, 0.25)`); gradient.addColorStop(0.5, `hsla(${hue2}, 95%, 15%, 0.15)`); gradient.addColorStop(1, 'rgba(1, 1, 3, 0)'); }
+
+            ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
+
+            let gridColor = 'rgba(255, 255, 255, 0.04)';
+            if (currentDifficulty === 'easy') gridColor = 'rgba(16, 185, 129, 0.04)';
+            if (currentDifficulty === 'medium') gridColor = 'rgba(245, 158, 11, 0.04)';
+            if (currentDifficulty === 'hard') gridColor = 'rgba(239, 68, 68, 0.04)';
+            if (currentDifficulty === 'hell') gridColor = 'rgba(168, 85, 247, 0.04)';
+            if (currentDifficulty === 'heaven') gridColor = 'rgba(56, 189, 248, 0.05)';
+            if (currentDifficulty === 'god') { let hGrid = Math.floor(bgHueOffset * 250) % 360; gridColor = `hsla(${hGrid}, 100%, 50%, 0.09)`; }
+
+            ctx.strokeStyle = gridColor; ctx.lineWidth = 1; const gridSpacing = currentDifficulty === 'god' ? 30 : 40;
+            for(let x = 0; x < width; x += gridSpacing) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); }
+            for(let y = 0; y < height; y += gridSpacing) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
+
+            ctx.strokeStyle = 'rgba(174, 207, 238, 0.15)'; ctx.lineWidth = 1;
+            rain.forEach(r => {
+                ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + (3 * dtScale), r.y + r.len); ctx.stroke();
+                r.y += r.speed * dtScale; if (r.y > height) { r.y = -r.len; r.x = Math.random() * width; }
+            });
+
+            embers.forEach(em => {
+                ctx.beginPath(); ctx.arc(em.x, em.y, em.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(244, 63, 94, ${em.glow})`; ctx.shadowBlur = 10; ctx.shadowColor = '#f43f5e';
+                ctx.fill(); ctx.shadowBlur = 0;
+                em.x += em.speedX * dtScale; em.y += em.speedY * dtScale;
+                if (em.y > height || em.x < 0) { em.y = -10; em.x = Math.random() * width; }
+            });
+
+            const cfg = DIFFICULTY_SETTINGS[currentDifficulty];
+            survivalTimeTracker += dtScale; 
+            dynamicSpeedMultiplier = Math.min(3.5, 1.0 + Math.pow((survivalTimeTracker / 60) * 0.08, 1.3));
+            dynamicChargeMultiplier = Math.min(4.0, 1.0 + Math.pow((survivalTimeTracker / 60) * 0.1, 1.4));
+
+            if (player.invincible > 0) player.invincible -= dtScale;
+            if (player.doublePoints > 0) player.doublePoints -= dtScale;
+            if (comboTimer > 0) { comboTimer -= dtScale; if (comboTimer <= 0) comboCounter = 0; }
+
+            if (enemiesToSpawn > 0 || ['hell', 'heaven', 'god'].includes(currentDifficulty)) {
+                waveTimer -= dtScale;
+                if (waveTimer <= 0) {
+                    spawnEnemy();
+                    waveTimer = currentDifficulty === 'god' ? 4 : (currentDifficulty === 'heaven' ? 8 : Math.max(25, 120 - (wave * 6))); 
+                }
+            } else checkWave();
+
+            if (dtScale < 1 && Math.random() < 0.3) player.afterImages.push({ x: player.x, y: player.y, life: 1.0 });
+
+            // Kılıç Çizgileri (Visual Slashes)
+            for (let i = visualSlashes.length - 1; i >= 0; i--) {
+                let vs = visualSlashes[i];
+                ctx.beginPath(); ctx.moveTo(vs.x1, vs.y1); ctx.lineTo(vs.x2, vs.y2);
+                ctx.strokeStyle = vs.color; ctx.lineWidth = vs.width * vs.life;
+                ctx.globalAlpha = vs.life; ctx.shadowBlur = 25; ctx.shadowColor = vs.color;
+                ctx.stroke(); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
+                vs.life -= 0.06;
+                if (vs.life <= 0) visualSlashes.splice(i, 1);
+            }
+
+            for (let i = swordWaves.length - 1; i >= 0; i--) {
+                let sw = swordWaves[i];
+                if (sw.type === 'oni') { sw.r += 3 * dtScale; sw.life -= 0.025 * dtScale; } 
+                else { sw.x += sw.vx * dtScale; sw.y += sw.vy * dtScale; sw.life -= 0.035 * dtScale; }
+
+                for (let j = 0; j < bullets.length; j++) {
+                    let b = bullets[j];
+                    if (!b.dead && Math.hypot(b.x - sw.x, b.y - sw.y) < sw.r + b.r) { createExplosion(b.x, b.y, '#fff', 5); b.dead = true; }
+                }
+
+                for (let j = 0; j < enemies.length; j++) {
+                    let e = enemies[j];
+                    if (!e.dead && Math.hypot(e.x - sw.x, e.y - sw.y) < sw.r + e.r) {
+                        createExplosion(e.x, e.y, e.color, 35);
+                        score += 10; document.getElementById('score-display').innerText = score;
+                        e.dead = true;
+                    }
+                }
+                if (sw.life <= 0 || (sw.type === 'oni' && sw.r >= sw.maxR)) sw.dead = true;
+            }
+
+            for (let i = siberChips.length - 1; i >= 0; i--) {
+                let c = siberChips[i]; c.pulse += 0.1;
+                const dx = player.x - c.x, dy = player.y - c.y, dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 180) { const pullForce = (180 - dist) * 0.1; c.vx += (dx / dist) * pullForce; c.vy += (dy / dist) * pullForce; }
+                c.vx *= 0.90; c.vy *= 0.90; c.x += c.vx; c.y += c.vy;
+                if (dist < player.r + c.r) {
+                    nanoChips++; document.getElementById('hud-chips').innerText = nanoChips;
+                    spawnFloatingText(c.x, c.y, "+1 ÇİP", '#10b981'); c.dead = true;
+                }
+            }
+
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                let p = powerups[i]; p.pulse += 0.1;
+                if (Math.hypot(player.x - p.x, player.y - p.y) < player.r + p.r) {
+                    if (p.type === 'shield') { player.shield = true; spawnFloatingText(p.x, p.y, "KALKAN AKTİF!", '#38bdf8', 1.2); } 
+                    else if (p.type === 'double') { player.doublePoints = 300; spawnFloatingText(p.x, p.y, "X2 SKOR MODU!", '#f59e0b', 1.2); }
+                    updateLivesUI(); powerups.splice(i, 1);
+                }
+            }
+
+            // Düşman Yapay Zekası Güncellemeleri
+            for (let i = 0; i < enemies.length; i++) {
+                let e = enemies[i];
+                if (e.dead) continue;
+                
+                if (e.type === 'chaser') {
+                    let angle = Math.atan2(player.y - e.y, player.x - e.x);
+                    e.x += Math.cos(angle) * (2.8 + wave * 0.15) * cfg.enemySpeedScale * dynamicSpeedMultiplier * dtScale;
+                    e.y += Math.sin(angle) * (2.8 + wave * 0.15) * cfg.enemySpeedScale * dynamicSpeedMultiplier * dtScale;
+                } 
+                else if (e.type === 'shooter') {
+                    let dist = Math.hypot(player.y - e.y, player.x - e.x);
+                    let angle = Math.atan2(player.y - e.y, player.x - e.x);
+                    if (dist > 260) {
+                        e.x += Math.cos(angle) * 1.8 * cfg.enemySpeedScale * dynamicSpeedMultiplier * dtScale;
+                        e.y += Math.sin(angle) * 1.8 * cfg.enemySpeedScale * dynamicSpeedMultiplier * dtScale;
+                    }
+                    e.timer -= dtScale;
+                    if (e.timer <= 0) {
+                        e.timer = (130 - Math.min(60, wave * 4)) / dynamicChargeMultiplier; 
+                        if (['heaven', 'god'].includes(currentDifficulty)) {
+                            for (let offset = -0.3; offset <= 0.3; offset += 0.3) {
+                                bullets.push({ x: e.x, y: e.y, vx: Math.cos(angle + offset) * (4.5 + wave * 0.25) * dynamicSpeedMultiplier, vy: Math.sin(angle + offset) * (4.5 + wave * 0.25) * dynamicSpeedMultiplier, r: 5, friendly: false, color: '#a855f7', dead: false });
+                            }
+                        } else {
+                            bullets.push({ x: e.x, y: e.y, vx: Math.cos(angle) * (4.5 + wave * 0.2) * dynamicSpeedMultiplier, vy: Math.sin(angle) * (4.5 + wave * 0.2) * dynamicSpeedMultiplier, r: 5, friendly: false, color: '#a855f7', dead: false });
+                        }
+                    }
+                }
+                else if (e.type === 'laser') {
+                    // LAZER HEDEF TAKİBİ DÜZELTİLDİ (Sürenin ilk %65'inde kilitlenmez ve oyuncuyu takip eder)
+                    if (e.state === 'aiming') {
+                        if (e.timer > e.maxTimer * 0.35) {
+                            e.laserAngle = Math.atan2(player.y - e.y, player.x - e.x);
+                            e.isLocked = false;
+                        } else {
+                            e.isLocked = true; 
+                        }
+
+                        e.timer -= dtScale;
+                        if (e.timer <= 0) {
+                            e.state = 'firing'; e.timer = 25; screenShake = 8;
+                        }
+                    } else if (e.state === 'firing') {
+                        e.timer -= dtScale;
+                        let laserEndX = e.x + Math.cos(e.laserAngle) * 2000;
+                        let laserEndY = e.y + Math.sin(e.laserAngle) * 2000;
+                        
+                        if (player.invincible <= 0) {
+                            if (distToSegment(player, {x:e.x, y:e.y}, {x:laserEndX, y:laserEndY}) < player.r + 8) playerTakeDamage();
+                        }
+
+                        if (e.timer <= 0) {
+                            e.state = 'aiming'; e.maxTimer = (cfg.laserChargeTime / dynamicChargeMultiplier);
+                            e.timer = e.maxTimer; e.isLocked = false;
+                        }
+                    }
+                }
+                else if (e.type === 'leviathan') {
+                    let angle = Math.atan2(player.y - e.y, player.x - e.x);
+                    e.x += Math.cos(angle) * 1.5 * cfg.enemySpeedScale * dynamicSpeedMultiplier * dtScale;
+                    e.y += Math.sin(angle) * 1.5 * cfg.enemySpeedScale * dynamicSpeedMultiplier * dtScale;
+
+                    e.timer -= dtScale;
+                    if (e.timer <= 0) {
+                        e.timer = 180; 
+                        for(let a=0; a<Math.PI*2; a+=Math.PI/4) {
+                            bullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * 4, vy: Math.sin(a) * 4, r: 6, friendly: false, color: '#10b981', dead: false });
+                        }
+                    }
+                }
+
+                if (player.invincible <= 0 && Math.hypot(player.y - e.y, player.x - e.x) < player.r + e.r) playerTakeDamage();
+            }
+
+            for (let i = 0; i < bullets.length; i++) {
+                let b = bullets[i]; if (b.dead) continue;
+                b.x += b.vx * dtScale; b.y += b.vy * dtScale;
+
+                if (!b.friendly) {
+                    if (player.invincible <= 0 && Math.hypot(player.y - b.y, player.x - b.x) < player.r + b.r) {
+                        playerTakeDamage(); b.dead = true; continue;
+                    }
+                } else {
+                    let hit = false;
+                    for (let j = 0; j < enemies.length; j++) {
+                        let e = enemies[j];
+                        if (!e.dead && Math.hypot(e.y - b.y, e.x - b.x) < e.r + b.r) {
+                            createExplosion(e.x, e.y, e.color, 25);
+                            score += 15; document.getElementById('score-display').innerText = score;
+                            e.dead = true; hit = true; break;
+                        }
+                    }
+                    if (hit) { b.dead = true; continue; }
+                }
+                if (b.x < -100 || b.x > width + 100 || b.y < -100 || b.y > height + 100) b.dead = true;
+            }
+
+            enemies = enemies.filter(e => !e.dead);
+            bullets = bullets.filter(b => !b.dead);
+            swordWaves = swordWaves.filter(sw => !sw.dead);
+            siberChips = siberChips.filter(c => !c.dead);
+
+            // --- ÇİZİMLER ---
+            for (let i = player.afterImages.length - 1; i >= 0; i--) {
+                let img = player.afterImages[i];
+                ctx.save(); ctx.beginPath(); ctx.arc(img.x, img.y, player.r, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(6, 182, 212, ${img.life * 0.2})`; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+                img.life -= 0.05; if (img.life <= 0) player.afterImages.splice(i, 1);
+            }
+
+            for (let sw of swordWaves) {
+                ctx.save(); ctx.translate(sw.x, sw.y); ctx.rotate(sw.angle);
+                ctx.beginPath();
+                if (sw.type === 'oni') { ctx.arc(0, 0, sw.r, 0, Math.PI * 2); ctx.strokeStyle = `rgba(245, 158, 11, ${sw.life})`; ctx.lineWidth = 6 * sw.life; } 
+                else { ctx.arc(0, 0, sw.r, -Math.PI / 2.5, Math.PI / 2.5); ctx.strokeStyle = `rgba(${parseInt(sw.color.slice(1,3),16)}, ${parseInt(sw.color.slice(3,5),16)}, ${parseInt(sw.color.slice(5,7),16)}, ${sw.life})`; ctx.lineWidth = 5 * sw.life; }
+                ctx.shadowBlur = 15; ctx.shadowColor = sw.color; ctx.stroke(); ctx.restore();
+            }
+
+            for (let c of siberChips) {
+                ctx.save(); ctx.translate(c.x, c.y); const pulseScale = 1 + Math.sin(c.pulse) * 0.18; ctx.scale(pulseScale, pulseScale);
+                ctx.fillStyle = '#10b981'; ctx.shadowBlur = 12; ctx.shadowColor = '#10b981'; ctx.fillRect(-5, -5, 10, 10);
+                ctx.fillStyle = '#34d399'; ctx.fillRect(-7, -3, 2, 1); ctx.fillRect(-7, 2, 2, 1); ctx.fillRect(5, -3, 2, 1); ctx.fillRect(5, 2, 2, 1); ctx.restore();
+            }
+
+            for (let p of powerups) {
+                ctx.save(); ctx.translate(p.x, p.y); const scale = 1 + Math.sin(p.pulse) * 0.2; ctx.scale(scale, scale); ctx.shadowBlur = 15;
+                if (p.type === 'shield') { ctx.shadowColor = '#38bdf8'; ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '9px Orbitron'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('S', 0, 0); } 
+                else { ctx.shadowColor = '#f59e0b'; ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000'; ctx.font = 'bold 9px Orbitron'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('X2', 0, 0); }
+                ctx.restore();
+            }
+
+            for (let e of enemies) {
+                if (e.type === 'laser') {
+                    let laserEndX = e.x + Math.cos(e.laserAngle) * 2000;
+                    let laserEndY = e.y + Math.sin(e.laserAngle) * 2000;
+                    ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(laserEndX, laserEndY);
+                    if (e.state === 'aiming') {
+                        if (!e.isLocked) { ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([10, 15]); } 
+                        else { ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)'; ctx.lineWidth = 4; ctx.setLineDash([]); }
+                    } else { ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 12; ctx.shadowBlur = 25; ctx.shadowColor = '#ef4444'; ctx.setLineDash([]); }
+                    ctx.stroke(); ctx.shadowBlur = 0; ctx.setLineDash([]);
+                }
+            }
+
+            for (let b of bullets) {
+                ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.fillStyle = b.color; ctx.shadowBlur = 10; ctx.shadowColor = b.color; ctx.fill(); ctx.shadowBlur = 0;
+                if (Math.random() < 0.2) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 2.8, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(168, 85, 247, 0.15)'; ctx.stroke(); }
+            }
+
+            for (let e of enemies) {
+                ctx.save(); ctx.translate(e.x, e.y);
+                let angle = e.type === 'laser' ? e.laserAngle : Math.atan2(player.y - e.y, player.x - e.x); ctx.rotate(angle);
+                
+                ctx.beginPath();
+                if (e.type === 'chaser') { ctx.moveTo(e.r, 0); ctx.lineTo(-e.r, e.r * 0.8); ctx.lineTo(-e.r, -e.r * 0.8); } 
+                else if (e.type === 'shooter') { ctx.moveTo(e.r, 0); ctx.lineTo(0, e.r); ctx.lineTo(-e.r, 0); ctx.lineTo(0, -e.r); } 
+                else if (e.type === 'laser') { ctx.moveTo(e.r * 1.4, 0); ctx.lineTo(-e.r, e.r); ctx.lineTo(-e.r * 0.5, 0); ctx.lineTo(-e.r, -e.r); } 
+                else if (e.type === 'leviathan') { ctx.moveTo(e.r, 0); ctx.lineTo(-e.r*0.5, e.r); ctx.lineTo(-e.r, e.r*0.5); ctx.lineTo(-e.r, -e.r*0.5); ctx.lineTo(-e.r*0.5, -e.r); }
+                ctx.closePath();
+                
+                ctx.fillStyle = '#020204'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = e.color; ctx.shadowBlur = 15; ctx.shadowColor = e.color; ctx.stroke();
+                if (e.type === 'laser' && e.state === 'aiming') {
+                    ctx.beginPath(); ctx.arc(0, 0, e.r * 1.8, 0, Math.PI * 2 * (1 - e.timer / e.maxTimer)); ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            // Gelişmiş Parçacık (Sparks & Explosions) Çizimi
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx * dtScale; p.y += p.vy * dtScale;
+                
+                if (p.isSpark) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x - p.vx*2, p.y - p.vy*2); // Çizgisel kıvılcım izi
+                    ctx.strokeStyle = p.color;
+                    ctx.lineWidth = p.r;
+                    ctx.stroke();
+                } else {
+                    if (p.bounce) { p.vy += 0.45 * dtScale; if (p.y > height - 10) { p.vy = -p.vy * 0.65; p.vx *= 0.8; p.y = height - 10; } } 
+                    else { p.vx *= 0.95; p.vy *= 0.95; }
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    if(p.color.startsWith('hsl')) ctx.fillStyle = p.color;
+                    else ctx.fillStyle = `rgba(${parseInt(p.color.slice(1,3),16)}, ${parseInt(p.color.slice(3,5),16)}, ${parseInt(p.color.slice(5,7),16)}, ${p.life})`;
+                    ctx.fill();
+                }
+                p.life -= p.decay * dtScale;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            ctx.save();
+            ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+            ctx.fillStyle = '#020204'; ctx.fill();
+            
+            if (player.invincible > 0 && Math.floor(Date.now() / 50) % 2 === 0) ctx.strokeStyle = '#ef4444';
+            else ctx.strokeStyle = player.color;
+            
+            ctx.lineWidth = 3; ctx.shadowBlur = 20; ctx.shadowColor = ctx.strokeStyle; ctx.stroke(); ctx.shadowBlur = 0;
+
+            if (player.shield) { ctx.beginPath(); ctx.arc(player.x, player.y, player.r + 6, 0, Math.PI * 2); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5; ctx.stroke(); }
+            if (player.doublePoints > 0) { ctx.beginPath(); ctx.arc(player.x, player.y, player.r + 10, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); }
+
+            if (pointer.isDown) {
+                let target = getDashTarget();
+                if (target) {
+                    ctx.save();
+                    ctx.beginPath(); ctx.moveTo(player.x, player.y); ctx.lineTo(target.x, target.y);
+                    ctx.strokeStyle = `rgba(${parseInt(player.color.slice(1,3),16)}, ${parseInt(player.color.slice(3,5),16)}, ${parseInt(player.color.slice(5,7),16)}, 0.5)`;
+                    ctx.lineWidth = 2; ctx.setLineDash([10, 10]); ctx.stroke(); ctx.setLineDash([]);
+                    ctx.beginPath(); ctx.arc(target.x, target.y, player.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${parseInt(player.color.slice(1,3),16)}, ${parseInt(player.color.slice(3,5),16)}, ${parseInt(player.color.slice(5,7),16)}, 0.25)`; ctx.fill();
+                    ctx.strokeStyle = `rgba(${parseInt(player.color.slice(1,3),16)}, ${parseInt(player.color.slice(3,5),16)}, ${parseInt(player.color.slice(5,7),16)}, 0.8)`;
+                    ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+                }
+            }
+
+            if (isMouseActive && pointer.type === 'mouse') {
+                ctx.save(); ctx.beginPath();
+                ctx.moveTo(rawMouseX - 6, rawMouseY); ctx.lineTo(rawMouseX - 2, rawMouseY);
+                ctx.moveTo(rawMouseX + 2, rawMouseY); ctx.lineTo(rawMouseX + 6, rawMouseY);
+                ctx.moveTo(rawMouseX, rawMouseY - 6); ctx.lineTo(rawMouseX, rawMouseY - 2);
+                ctx.moveTo(rawMouseX, rawMouseY + 2); ctx.lineTo(rawMouseX, rawMouseY + 6);
+                ctx.strokeStyle = player.color; ctx.lineWidth = 1.5; ctx.stroke();
+                ctx.beginPath(); ctx.arc(rawMouseX, rawMouseY, 1.5, 0, Math.PI * 2); ctx.fillStyle = player.color; ctx.fill(); ctx.restore();
+            }
+            
+            // Combo Metni Çizimi
+            if (comboCounter > 1) {
+                ctx.save();
+                let comboScale = Math.min(60, 30 + comboCounter * 3);
+                ctx.font = `italic 900 ${comboScale}px Orbitron`;
+                ctx.fillStyle = currentDifficulty === 'god' ? `hsl(${Math.random()*360}, 100%, 60%)` : `hsl(${(comboCounter*15)%360}, 100%, 60%)`;
+                ctx.textAlign = 'right';
+                ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
+                ctx.fillText(comboCounter + " COMBO!", width - 20, 80);
+                ctx.restore();
+            }
+
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ft.y -= 1 * dtScale; ft.life -= 0.02 * dtScale;
+                let fontSize = 18 * (ft.scale || 1.0);
+                ctx.font = `bold ${fontSize}px Orbitron`; ctx.fillStyle = ft.color;
+                ctx.globalAlpha = Math.max(0, ft.life); ctx.shadowBlur = 10; ctx.shadowColor = ft.color;
+                ctx.textAlign = 'center'; ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
+                if (ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            ctx.restore();
+
+            if (hitFlash > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${hitFlash})`; ctx.fillRect(0, 0, width, height); hitFlash -= 0.04; 
+            }
+        }
+
+        loadFromLocalStorage(); initEnvironmentalEffects();
+    </script>
+</body>
+</html>
